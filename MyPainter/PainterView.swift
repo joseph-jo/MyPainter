@@ -19,6 +19,7 @@ class PainterView: UIView {
     }
      
     var drawingLayer = MyDrawingShapeLayer()
+    var layerDelegate = LayerDelegate()
     var touchList = [CGPoint]()
     let lineWidth: CGFloat = 20
         
@@ -34,6 +35,7 @@ class PainterView: UIView {
         self.layer.backgroundColor = UIColor.lightGray.cgColor
         
         self.drawingLayer.contentsScale = UIScreen.main.scale
+//        self.drawingLayer.delegate = layerDelegate
         self.layer.addSublayer(self.drawingLayer)
     }
     
@@ -44,7 +46,9 @@ class PainterView: UIView {
             drawingLayer.frame = self.frame
         }
     }
-    
+}
+
+extension PainterView {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let firstPt = touch.previousLocation(in: self)
@@ -64,7 +68,7 @@ class PainterView: UIView {
         else {
             let linePath = generateLine(ptList: &touchList)
             onPaint(linePath: linePath)
-        }            
+        }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -117,23 +121,24 @@ extension PainterView {
         
         let render = UIGraphicsImageRenderer(bounds: self.frame)
         let img = render.image { (ctx) in
-            
+
             drawingLayer.render(in: ctx.cgContext)
         }
         
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         drawingLayer.contents = img.cgImage
+        CATransaction.commit()
+        
+        removeAllSublayers(drawingLayer)
     }
         
     func removeAllSublayers(_ layer: CALayer) {
         
         guard let subLayers = layer.sublayers else { return }
-        
-        for subLayer in subLayers {
-            if subLayer is MyDrawingShapeLayer {
-                subLayer.removeFromSuperlayer()
-            }
+        subLayers.forEach {
+            $0.removeFromSuperlayer()
         }
-        
     }
 }
 
