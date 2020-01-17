@@ -14,8 +14,7 @@
 		614C3F8223CD87B700F382C1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 614C3F8123CD87B700F382C1 /* Assets.xcassets */; };
 		614C3F8523CD87B700F382C1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 614C3F8323CD87B700F382C1 /* LaunchScreen.storyboard */; };
 		614C3F8D23CD883500F382C1 /* PainterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614C3F8C23CD883500F382C1 /* PainterView.swift */; };
-		614C3F9023CDA21400F382C1 /* MyDrawingShapeLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614C3F8F23CDA21400F382C1 /* MyDrawingShapeLayer.swift */; };
-		614C3F9423D011B800F382C1 /* LayerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614C3F9323D011B800F382C1 /* LayerDelegate.swift */; };
+		614C3F9623D1557600F382C1 /* PointListPool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614C3F9523D1557600F382C1 /* PointListPool.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,8 +27,7 @@
 		614C3F8423CD87B700F382C1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		614C3F8623CD87B700F382C1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		614C3F8C23CD883500F382C1 /* PainterView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PainterView.swift; sourceTree = "<group>"; };
-		614C3F8F23CDA21400F382C1 /* MyDrawingShapeLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyDrawingShapeLayer.swift; sourceTree = "<group>"; };
-		614C3F9323D011B800F382C1 /* LayerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayerDelegate.swift; sourceTree = "<group>"; };
+		614C3F9523D1557600F382C1 /* PointListPool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointListPool.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,8 +76,7 @@
 		614C3F8E23CDA1FB00F382C1 /* SubClass */ = {
 			isa = PBXGroup;
 			children = (
-				614C3F8F23CDA21400F382C1 /* MyDrawingShapeLayer.swift */,
-				614C3F9323D011B800F382C1 /* LayerDelegate.swift */,
+				614C3F9523D1557600F382C1 /* PointListPool.swift */,
 			);
 			path = SubClass;
 			sourceTree = "<group>";
@@ -159,8 +156,7 @@
 				614C3F7923CD87B600F382C1 /* AppDelegate.swift in Sources */,
 				614C3F8D23CD883500F382C1 /* PainterView.swift in Sources */,
 				614C3F7B23CD87B600F382C1 /* SceneDelegate.swift in Sources */,
-				614C3F9423D011B800F382C1 /* LayerDelegate.swift in Sources */,
-				614C3F9023CDA21400F382C1 /* MyDrawingShapeLayer.swift in Sources */,
+				614C3F9623D1557600F382C1 /* PointListPool.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -10,17 +10,11 @@ import UIKit
 
 class PainterView: UIView {
     
-    var eraseMode = false {
-        didSet {
-            if self.eraseMode == true {
-                self.flattenLayers(drawingLayer: self.drawingLayer, max: 0)
-            }
-        }
-    }
-     
-    var drawingLayer = MyDrawingShapeLayer()
-    var layerDelegate = LayerDelegate()
-    var touchList = [CGPoint]()
+    var eraseMode = false
+    var drawingLayer = CAShapeLayer()
+    var erasingLayer = CAShapeLayer()
+    var backgroundContents: CGImage? = nil
+    var touchPool = PointListPool()
     let lineWidth: CGFloat = 20
         
     override init(frame: CGRect) {
@@ -35,54 +29,74 @@ class PainterView: UIView {
         self.layer.backgroundColor = UIColor.lightGray.cgColor
         
         self.drawingLayer.contentsScale = UIScreen.main.scale
-//        self.drawingLayer.delegate = layerDelegate
         self.layer.addSublayer(self.drawingLayer)
-    }
+        
+        self.erasingLayer.contentsScale = UIScreen.main.scale
+        self.layer.addSublayer(self.erasingLayer)
+        
+        // Keep the background img
+        let render = UIGraphicsImageRenderer(bounds: self.bounds)
+        let img = render.image { (ctx) in
+
+            self.layer.render(in: ctx.cgContext)
+        }
+        self.backgroundContents = img.cgImage
+}
+    
     
     override func layoutSubviews() {
-        
-        let frame = drawingLayer.frame
-        if frame == .zero {
-            drawingLayer.frame = self.frame
-        }
+         
+        drawingLayer.frame = self.frame
+        erasingLayer.frame = self.frame
     }
 }
 
 extension PainterView {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
-        let firstPt = touch.previousLocation(in: self)
-        self.touchList.append(firstPt)
         
-        removeAllSublayers(self.drawingLayer)
+        let firstPt = touch.previousLocation(in: self)
+        self.touchPool.append(firstPt)
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         
-        self.touchList.append(touch.location(in: self))
+        self.touchPool.append(touch.location(in: self))
         if self.eraseMode {
-            let linePath = generateLine(ptList: &touchList)
-            onErase(linePath: linePath)
+            let linePath = generateLine(ptList: &touchPool.listCurrent)
+            let erasingLayer = onErase(linePath: linePath)
+            
+            self.erasingLayer.addSublayer(erasingLayer)
+            flattenLayers(parentLayer:self.erasingLayer, max: 50)
         }
         else {
-            let linePath = generateLine(ptList: &touchList)
-            onPaint(linePath: linePath)
+            let linePath = generateLine(ptList: &touchPool.listCurrent)
+            let paintingLayer = onPaint(linePath: linePath)
+            
+            self.drawingLayer.addSublayer(paintingLayer)
+            flattenLayers(parentLayer:self.drawingLayer, max: 50)
         }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
                    
-        self.touchList.removeAll()
-        flattenLayers(drawingLayer:self.drawingLayer, max: 0)
+        if self.eraseMode {
+            flattenLayers(parentLayer:self.erasingLayer, max: 0)
+        }
+        else {
+            flattenLayers(parentLayer:self.drawingLayer, max: 0)
+        }
+        self.touchPool.removeAll()
     }
 }
 
 extension PainterView {
                   
-    func onPaint(linePath: UIBezierPath) {
+    func onPaint(linePath: UIBezierPath) -> CAShapeLayer {
                 
-        let paintingLayer = MyDrawingShapeLayer()
+        NSLog("\(#function)")
+        let paintingLayer = CAShapeLayer()
         paintingLayer.path = linePath.cgPath
         
         paintingLayer.contentsScale = UIScreen.main.scale
@@ -92,45 +106,73 @@ extension PainterView {
         paintingLayer.lineWidth = lineWidth
         paintingLayer.lineCap = .round
          
-        self.drawingLayer.addSublayer(paintingLayer)
-        flattenLayers(drawingLayer:self.drawingLayer, max: 50)
+        return paintingLayer
     }
     
-    func onErase(linePath: UIBezierPath) {
+    func onErase(linePath: UIBezierPath) -> CAShapeLayer  {
         
-        let render = UIGraphicsImageRenderer(bounds: self.bounds)
+        NSLog("\(#function)")
+        let paintingLayer = CAShapeLayer()
+        paintingLayer.frame = self.layer.frame
+        paintingLayer.contents = backgroundContents
+        
+        let maskLayer = CAShapeLayer()
+        maskLayer.frame = paintingLayer.frame
+        maskLayer.lineCap = .round
+        maskLayer.path = linePath.cgPath
+        maskLayer.lineWidth = lineWidth
+        maskLayer.strokeColor = UIColor.black.cgColor
+        maskLayer.fillColor = UIColor.clear.cgColor
 
-        let img = render.image { (ctx) in
-
-            drawingLayer.render(in: ctx.cgContext)
-            ctx.cgContext.setLineCap(.round)
-            ctx.cgContext.setLineWidth(lineWidth)
-            ctx.cgContext.setBlendMode(.clear)
-
-            ctx.cgContext.addPath(linePath.cgPath)
-            ctx.cgContext.strokePath()
+        // add mask
+        paintingLayer.mask = maskLayer
+                  
+        return paintingLayer
+    }
+    
+    // We won't render all sublayers here, indeed we will redraw all the contents of sublayers from their points, because the rendering of all sublayer tree to img at UIGraphicsImageRenderer is very slow and CPU cost, especially if there is a mask
+    func flattenLayers(parentLayer: CAShapeLayer, max: Int) {
+        
+        NSLog("\(#function)")
+        guard parentLayer.sublayers != nil else { return }
+        guard parentLayer.sublayers!.count > max else { return }
+        
+        // Remove all sublayers, we will redraw all points
+        removeAllSublayers(parentLayer)
+               
+        // Redraw all points at a new layer
+        var reDrawLayer: CAShapeLayer
+        if self.eraseMode {
+            let linePath = generateLine(ptList: &touchPool.listHistory)
+            reDrawLayer = onErase(linePath: linePath)
         }
-
-        drawingLayer.contents = img.cgImage
-    }
-    
-    func flattenLayers(drawingLayer: CALayer, max: Int) {
-        
-        guard drawingLayer.sublayers != nil else { return }
-        guard drawingLayer.sublayers!.count > max else { return }
-        
+        else {
+            let linePath = generateLine(ptList: &touchPool.listHistory)
+            reDrawLayer = onPaint(linePath: linePath)
+        }
+        parentLayer.addSublayer(reDrawLayer)
+         
+        // ..
+        if self.eraseMode {
+            self.drawingLayer.addSublayer(parentLayer)
+        }
+                
         let render = UIGraphicsImageRenderer(bounds: self.frame)
         let img = render.image { (ctx) in
 
-            drawingLayer.render(in: ctx.cgContext)
+            // To make sure we just render one sublayer
+            NSLog("render subLayers: \(self.drawingLayer.sublayers!.count)")
+            assert(self.drawingLayer.sublayers!.count == 1)
+
+            self.drawingLayer.render(in: ctx.cgContext)
         }
-        
+//        _ = self.saveImage(image: img)
+
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        drawingLayer.contents = img.cgImage
+        self.drawingLayer.contents = img.cgImage
         CATransaction.commit()
-        
-        removeAllSublayers(drawingLayer)
+        removeAllSublayers(self.drawingLayer)
     }
         
     func removeAllSublayers(_ layer: CALayer) {
@@ -148,22 +190,16 @@ extension PainterView {
 
         let linePath = UIBezierPath()
         
-        while ptList.count > 3 {
+        while ptList.available {
+            guard let (secondPt, firstPt, endPt) = ptList.getFirstThreePointsAtCurrent(withRemoveFirst: true) else {
+                break
+            }
             
-            let secondPt = ptList[0]
-            let firstPt = ptList[1]
-            let endPt = ptList[2]
-
             let midFirst = midPoint(p1: firstPt, p2: secondPt)
             let midSecond = midPoint(p1: endPt, p2: firstPt)
-            
-            let paintingLayer = CAShapeLayer()
-            
-            paintingLayer.contentsScale = UIScreen.main.scale
+
             linePath.move(to: midFirst)
             linePath.addQuadCurve(to: midSecond, controlPoint: firstPt)
-            
-            ptList.removeFirst()
         }
         
         return linePath
@@ -174,3 +210,21 @@ extension PainterView {
     }
 }
 
+extension PainterView {
+    
+    func saveImage(image: UIImage) -> Bool {
+        guard let data = image.jpegData(compressionQuality: 1) ?? image.pngData() else {
+            return false
+        }
+        guard let directory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) as NSURL else {
+            return false
+        }
+        do {
+            try data.write(to: directory.appendingPathComponent("fileName.png")!)
+            return true
+        } catch {
+            print(error.localizedDescription)
+            return false
+        }
+    }
+}
