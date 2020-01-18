@@ -30,8 +30,6 @@ class PainterView: UIView {
     }
     
     func captureBackgroundContents() {
-        NSLog("\(self.frame)")
-        
         // Keep the background img
         let format = UIGraphicsImageRendererFormat()
         format.scale = UIScreen.main.scale
@@ -106,8 +104,7 @@ extension PainterView {
         NSLog("\(#function)")
         let paintingLayer = CAShapeLayer()
         paintingLayer.frame = self.layer.frame
-        NSLog("\(paintingLayer.frame)")
-        paintingLayer.contents = backgroundContents
+        paintingLayer.contents = self.backgroundContents
         
         let maskLayer = CAShapeLayer()
         maskLayer.frame = paintingLayer.frame
@@ -129,16 +126,13 @@ extension PainterView {
         guard hostingLayer.sublayers!.count > max else { return }
         
         NSLog("\(#function)")
-        
-        // Remove all sublayers, we will redraw all points
-//        removeAllSublayers(hostingLayer)
+        // Remove all sublayers generated from func touchsMove, we will redraw them after
         for layer in self.touchsMoveSublayers {
             layer.removeFromSuperlayer()
         }
         self.touchsMoveSublayers.removeAll()
                
-        // Redraw all points at a new layer
-        NSLog("Redraw Start")
+        // Redraw all points at a new layer from listHistory
         var aRedrawLayer: CAShapeLayer
         let linePath = generateLine(ptList: &touchPool.listHistory)
         if self.eraseMode {
@@ -148,28 +142,7 @@ extension PainterView {
             aRedrawLayer = onPaint(linePath: linePath)
         }
         self.layer.addSublayer(aRedrawLayer)
-        self.touchPool.removeAll()
-        NSLog("Redraw End")
-
-//        NSLog("Render Start")
-
-//        let render = UIGraphicsImageRenderer(bounds: self.frame)
-//        let img = render.image { (ctx) in
-//
-//            // To make sure we just render one sublayer
-//            NSLog("render subLayers: \(hostingLayer.sublayers!.count)")
-//            assert(hostingLayer.sublayers!.count == 1)
-//
-//            hostingLayer.render(in: ctx.cgContext)
-//        }
-//        NSLog("Render End")
-//        _ = self.saveImage(image: img)
-//
-//        CATransaction.begin()
-//        CATransaction.setDisableActions(true)
-//        hostingLayer.contents = img.cgImage
-//        CATransaction.commit()
-//        removeAllSublayers(hostingLayer)
+        self.touchPool.removeAll()        
     }
         
     func removeAllSublayers(_ layer: CALayer) {
