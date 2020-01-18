@@ -9,13 +9,13 @@
 import UIKit
 
 class ViewController: UIViewController {
-
+    
     @IBOutlet var painterView: PainterView!
     @IBOutlet var picker: UISegmentedControl!
-    
         
     override func viewDidLoad() {
         super.viewDidLoad()
+        painterView.captureBackgroundContents()
     }
     
     @IBAction func onPickerValueChanged(_ sender: UISegmentedControl) {
@@ -26,8 +26,6 @@ class ViewController: UIViewController {
         else {
             self.painterView.eraseMode = true
         }
-    }
-    
-
+    }     
 }
 
