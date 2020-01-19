@@ -56,7 +56,7 @@ extension PainterView {
         guard let touch = touches.first else { return }
         
         self.touchPool.append(touch.location(in: self))
-        let linePath = generateLine(ptList: &touchPool.listCurrent)
+        let linePath = generateBezierLine(ptList: &touchPool.listCurrent)
         var touchsMoveLayer: CALayer? = nil
         
         if self.eraseMode {
@@ -134,7 +134,7 @@ extension PainterView {
                
         // Redraw all points at a new layer from listHistory
         var aRedrawLayer: CAShapeLayer
-        let linePath = generateLine(ptList: &touchPool.listHistory)
+        let linePath = generateBezierLine(ptList: &touchPool.listHistory)
         if self.eraseMode {
             aRedrawLayer = onErase(linePath: linePath)
         }
@@ -156,20 +156,20 @@ extension PainterView {
 
 extension PainterView {
     
-    func generateLine(ptList: inout [CGPoint]) -> UIBezierPath {
+    func generateBezierLine(ptList: inout [CGPoint]) -> UIBezierPath {
 
         let linePath = UIBezierPath()
         
         while ptList.available {
-            guard let (secondPt, firstPt, endPt) = ptList.getFirstThreePointsAtCurrent(withRemoveFirst: true) else {
+            guard let (ptFirst, ptSecond, ptEnd) = ptList.getFirstThreePoints(withRemoveFirst: true) else {
                 break
             }
             
-            let midFirst = midPoint(p1: firstPt, p2: secondPt)
-            let midSecond = midPoint(p1: endPt, p2: firstPt)
+            let midFirst = midPoint(p1:ptFirst, p2:ptSecond)
+            let midSecond = midPoint(p1:ptSecond, p2:ptEnd)
 
             linePath.move(to: midFirst)
-            linePath.addQuadCurve(to: midSecond, controlPoint: firstPt)
+            linePath.addQuadCurve(to: midSecond, controlPoint: ptSecond)
         }
         
         return linePath

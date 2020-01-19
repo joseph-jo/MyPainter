@@ -32,7 +32,7 @@ extension Array {
         }
     }
     
-    mutating func getFirstThreePointsAtCurrent(withRemoveFirst removeFirst: Bool) -> (CGPoint, CGPoint, CGPoint)? {
+    mutating func getFirstThreePoints(withRemoveFirst removeFirst: Bool) -> (CGPoint, CGPoint, CGPoint)? {
         
         if self.available == false {
             return nil
