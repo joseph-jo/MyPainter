@@ -15,7 +15,6 @@ class PainterView: UIView {
     var touchPool = PointListPool()
     var touchsMoveSublayers = [CALayer]()
     let lineWidth: CGFloat = 20
-    let maxSublayer: Int = 500
         
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -67,16 +66,15 @@ extension PainterView {
         }
         self.layer.addSublayer(touchsMoveLayer!)
         self.touchsMoveSublayers.append(touchsMoveLayer!)
-        flattenLayers(hostingLayer:self.layer, max: maxSublayer)
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
                    
         if self.eraseMode {
-            flattenLayers(hostingLayer:self.layer, max: 0)
+            combineLayer(hostingLayer:self.layer)
         }
         else {
-            flattenLayers(hostingLayer:self.layer, max: 0)
+            combineLayer(hostingLayer:self.layer)
         }
     }
 }
@@ -85,7 +83,6 @@ extension PainterView {
                   
     func onPaint(linePath: UIBezierPath) -> CAShapeLayer {
                 
-        NSLog("\(#function)")
         let paintingLayer = CAShapeLayer()
         paintingLayer.path = linePath.cgPath
         
@@ -101,7 +98,6 @@ extension PainterView {
     
     func onErase(linePath: UIBezierPath) -> CAShapeLayer  {
         
-        NSLog("\(#function)")
         let paintingLayer = CAShapeLayer()
         paintingLayer.frame = self.layer.frame
         paintingLayer.contents = self.backgroundContents
@@ -120,12 +116,10 @@ extension PainterView {
         return paintingLayer
     }
     
-    func flattenLayers(hostingLayer: CALayer, max: Int) {
+    func combineLayer(hostingLayer: CALayer) {
         
         guard hostingLayer.sublayers != nil else { return }
-        guard hostingLayer.sublayers!.count > max else { return }
         
-        NSLog("\(#function)")
         // Remove all sublayers generated from func touchsMove, we will redraw them after
         for layer in self.touchsMoveSublayers {
             layer.removeFromSuperlayer()
